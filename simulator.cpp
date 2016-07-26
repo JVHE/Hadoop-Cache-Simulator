@@ -1,3 +1,6 @@
+// this is not working
+// we are making now
+
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -52,8 +55,8 @@ class File {
 //NameNode Class
 class NameNode {
 	private:
-		int node_size;
-		int file_num;
+		int node_size;		// size of each node
+		int file_num;		// number of files
 		bool *failed_worker_check;
 		int **node_file_num;
 	
@@ -66,6 +69,7 @@ class NameNode {
 		int FindNode(int fileindex, int blockindex, int order);
 		int *FindData(int nodeindex, int fileindex);
 		bool IsInNode(int nodeindex, int fileindex, int blockindex);
+		// void AddFile(File f);  <<<< how to add files whenever we want? linked list?
 };
 
 //Container Class
@@ -73,7 +77,8 @@ class Container {
 	friend class Node;
 	friend class ResourceManager;
 	private:
-		int working_time;
+		int start_time;
+		int end_time;
 		Application *task;
 		int task_index;
 		bool is_working;
@@ -81,7 +86,7 @@ class Container {
 	public:
 		Container();
 		void TaskExecute(Node *node, Application *job, int fileidx, int blockidx, string state); 
-		int GetWorkingTime();
+		int GetStartTime();
 		bool GetIsWorking();
 		int GetAvgTaskTime();
 };
@@ -105,21 +110,25 @@ class Node {
 class Application {
 	friend class ResourceManager;
 	private:
-		int app_idx;		//app index
-		string app_type;	//application name
-		int file_idx;		//which file is needed
-		int mapper_num;		
+		int app_idx;		// index of the job
+		string app_type;	// name of the job
+		int file_idx;		// index of needed file
+		int mapper_num;	// number of mappers = number of blocks
 		int reducer_num;
-		int avg_task_time_per_block;
-		int skip_count;		
-		int skip_checker;	//threshold
+		int avg_task_time_per_block; // <<<<< access_time과 같은 것?
+		int skip_count;
+		int skip_checker;
 		bool *working_state;
 		int task_pointer;
-		int task_counter;	//threshold
-		int access_time;
+		int task_counter;
+		// int access_time;
+		int cache_local_avg_map_time;
+		int data_local_avg_map_time;
+		int rack_local_avg_map_time;
+		int avg_reduce_time;
 
 	public:
-		Application(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount);
+		Application(int appnum, string type, File *f, int rednum, int avgtasktime, int cachetime, int datatime, int racktime, int reducetime, int skipcount);
 		void SetProcessed(int taskidx);
 		void SetWorkingState(int taskidx);
 		int GetAvgTaskTime();
@@ -134,16 +143,16 @@ class Grep : public Application {
 	private:
                         
 	public:         
-		Grep(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
-	}
+	//	Grep(int appnum, string type, File *f, int rednum, int avgtasktime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
+	//}
 };
 
 class WordCount: public Application {
 	private:
                         
 	public:         
-		WordCount(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
-	}
+	//	WordCount(int appnum, string type, File *f, int rednum, int avgtasktime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
+	//}
 };
 
 //ResourceManager Class
@@ -212,7 +221,6 @@ bool File::IsInNode(int nodenum, int dataidx) {
 NameNode::NameNode(int nodesize, Node *worker[], int filenum, File *f[]) {
 	node_size = nodesize;
 	file_num = filenum;
-	cout << node_size;
 	file = f;
 	failed_worker_check = new bool[node_size];
 	for(int i=0; i<node_size; i++) {
@@ -267,19 +275,19 @@ bool NameNode::IsInNode(int nodeindex, int fileindex, int blockindex) {
 
 Container::Container() {
 	is_working = false;
-	working_time = 0;
+	start_time = 0;
 }
 
 void Container::TaskExecute(Node *node, Application *job, int fileidx, int blockidx, string state) {
 	task = job;
 	//cache local--------------------------------
 	if(state == "cache_local") {
-		working_time += job->GetAvgTaskTime();
+		start_time += job->GetAvgTaskTime();
 		job->SetWorkingState(blockidx);
 	}
 }
 
-int Container::GetWorkingTime() { return working_time; }
+int Container::GetStartTime() { return start_time; }
 bool Container::GetIsWorking() { return is_working; }
 int Container::GetAvgTaskTime() { return task->GetAvgTaskTime(); }
 
@@ -297,7 +305,7 @@ int Node::GetContSize() { return container_size; }
 
 //Application Class implementation--------------------------------------------------------------------
 
-Application::Application(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount) {
+Application::Application(int appnum, string type, File *f, int rednum, int avgtasktime, int cachetime, int datatime, int racktime, int reducetime, int skipcount) {
 	app_idx = appnum;
 	app_type = type;
 	file_idx = f->GetFileIdx();
@@ -309,7 +317,10 @@ Application::Application(int appnum, string type, File *f, int rednum, int avgta
 	skip_count = skipcount;
 	skip_checker = 0;
 	working_state = new bool[mapper_num];
-	access_time = accesstime;
+	cache_local_avg_map_time = cachetime;
+	data_local_avg_map_time = datatime;
+	rack_local_avg_map_time = racktime;
+	avg_reduce_time = reducetime;
 	for(int i=0; i<mapper_num; i++) {
 		working_state[i] = false;
 	}
@@ -435,7 +446,7 @@ int main() {
 	cout << "Set job type, input file, reduce tasks, average task time, requesting time, skip count.\n";
 	for(int i=0; i<app_num; i++) {
 		cin >> apptype >> inputfile >> reducenum >> avgtasktime >> requesttime >> skipcount;
-		Apps[i] = new Application(i, apptype, files[inputfile], reducenum, avgtasktime, requesttime, skipcount);
+		//Apps[i] = new Application(i, apptype, files[inputfile], reducenum, avgtasktime, requesttime, skipcount);
 	}
 	cout << "Application setting is complete.\n";
 	// 4. Main Task Start
