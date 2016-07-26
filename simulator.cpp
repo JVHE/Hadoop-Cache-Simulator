@@ -19,16 +19,16 @@ class Data {
 	friend class File;
 	friend class NameNode;
 	private:
-		int file_info;
-		int data_info;
-		int node_position;           //what node has this data
+		int file_idx;			// index of file where this data located
+		int data_idx;			// index of data
+		int node_position;	// node position of the data
 		bool is_cached;
 
 	public:
 		Data();
 		Data(int nodenum, int fileidx, int dataidx);
-		int GetFileInfo();
-		int GetDataInfo();
+		int GetFileIdx();
+		int GetDataIdx();
 		int GetNodePosition();
 		bool IsCached();
 };
@@ -39,16 +39,14 @@ class File {
 	private:
 		int file_idx;
 		int file_size;
-		Data **datas;
+		Data **datas;		// datas in the file
 
 	public:
 		File(int fileidx, int size, int nodesize);
 		int GetFileIdx();
 		int GetFileSize();
-		int GetNodePosition(int dataidx, int order);
+		Data GetData(int dataidx, int order);
 		bool IsInNode(int nodenum, int dataidx);
-		bool IsCached(int nodenum, int dataidx);
-		bool IsCached(int dataidx);	
 };
 
 //NameNode Class
@@ -161,21 +159,21 @@ class ResourceManager {
 //Data Class implementation------------------------------------------------------------------------
 
 Data::Data() {
-	this->file_info = -1;
-	this->data_info = -1;
+	this->file_idx = -1;
+	this->data_idx = -1;
 	this->node_position = -1;
 	this->is_cached = false;
 }
 
 Data::Data(int nodenum, int fileidx, int dataidx) {
-	file_info = fileidx;
-	data_info = dataidx;
+	file_idx = fileidx;
+	data_idx = dataidx;
 	node_position = nodenum;
 	is_cached = false;
 }
 
-int Data::GetFileInfo() { return file_info; }
-int Data::GetDataInfo() { return data_info; }
+int Data::GetFileIdx() { return file_idx; }
+int Data::GetDataIdx() { return data_idx; }
 int Data::GetNodePosition() { return node_position; }
 
 bool Data::IsCached() { return is_cached; }
@@ -189,8 +187,8 @@ File::File(int fileidx, int size, int nodesize) {
 	for(int i=0; i<file_size; i++) {
 		datas[i] = new Data[3];
 		for(int j=0; j<3; j++) {
-			datas[i][j].file_info = file_idx;
-			datas[i][j].data_info = i;
+			datas[i][j].file_idx = file_idx;
+			datas[i][j].data_idx = i;
 			datas[i][j].node_position = rand()%nodesize;
 		}
 	}
@@ -198,7 +196,7 @@ File::File(int fileidx, int size, int nodesize) {
 
 int File::GetFileIdx() { return file_idx; }
 int File::GetFileSize() { return file_size; }
-int File::GetNodePosition(int dataidx, int order) { return this->datas[dataidx][order].GetNodePosition(); }
+Data File::GetData(int dataidx, int order) { return datas[dataidx][order]; }
 
 bool File::IsInNode(int nodenum, int dataidx) {
 	for(int i=0; i<3; i++) {
@@ -206,22 +204,6 @@ bool File::IsInNode(int nodenum, int dataidx) {
 			return true;
 		}
 	}
-	return false;
-}
-
-bool File::IsCached(int nodenum, int dataidx) {
-	for(int i=0; i<3; i++) {
-		if(this->IsInNode(nodenum, dataidx)) {
-			if(datas[dataidx][i].IsCached()) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-bool File::IsCached(int dataidx) {
-	for(int i=0; i<3; i++) { if(datas[dataidx][i].IsCached() == true) { return true; } }
 	return false;
 }
 
@@ -246,11 +228,11 @@ int NameNode::GetNodeSize() { return node_size; }
 int NameNode::GetNodeFileNum(int nodeindex, int fileindex) { return node_file_num[nodeindex][fileindex]; }
 
 int NameNode::FindNode(int fileindex, int blockindex) {
-        return this->file[fileindex]->GetNodePosition(blockindex, 0);
+        return file[fileindex]->GetData(blockindex, 0).GetNodePosition();
 }
 
 int NameNode::FindNode(int fileindex, int blockindex, int order) {
-	return this->file[fileindex]->GetNodePosition(blockindex, order);	
+	return this->file[fileindex]->GetData(blockindex, order).GetNodePosition();
 }
 
 int *NameNode::FindData(int nodeindex, int fileindex) {
@@ -262,7 +244,7 @@ int *NameNode::FindData(int nodeindex, int fileindex) {
 	int flag = 0;
 	for(int i=0; i<arr_size_tmp; i++) {
 		for(int j=0; j<3; j++) {
-			if(nodeindex == file[fileindex]->GetNodePosition(i, j)) {
+			if(nodeindex == file[fileindex]->GetData(i, j).GetNodePosition()) {
 				return_arr[flag] = i;
 				flag++;
 			}
@@ -348,7 +330,7 @@ bool Application::GetWorkingState(int taskidx) { return working_state[taskidx]; 
 void Application::AddTaskCounter() { task_counter++; }
 
 //Resourece Manager implemenatation----------------------------------------------------------------
-
+/*
 void ResourceManager::JobCompleteManager(NameNode *NM, Node *nodes[]) {
 	for(int i=0; i<NM->GetNodeSize(); i++) {
 		for(int j=0; j<nodes[0]->GetContSize(); j++) {
@@ -381,7 +363,10 @@ void ResourceManager::DelayScheduling(NameNode *NM, Node *nodes[], Application *
 	}	
 	
 }
+*/
 
+void ResourceManager::JobCompleteManager(NameNode *NM, Node *nodes[]) { }
+void ResourceManager::DelayScheduling(NameNode *NM, Node *nodes[], Application *jobs[], int app_num) { }
 //Main Function
 int main() {
 	// Randomize
@@ -416,11 +401,11 @@ int main() {
 		// test print
 	for(int i=0; i<file_num; i++) {
 		cout << "############"<<endl;
-		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetNodePosition(j, 0) << " ";
+		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetData(j, 0).GetNodePosition() << " ";
 		cout << endl;
-		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetNodePosition(j, 1) << " ";
+		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetData(j, 1).GetNodePosition() << " ";
 		cout << endl;
-		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetNodePosition(j, 2) << " ";
+		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetData(j, 2).GetNodePosition() << " ";
 		cout << endl;
 	}
 	cout << "Each node has these datas.\n";
