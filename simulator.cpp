@@ -19,55 +19,55 @@ class Data {
 	friend class File;
 	friend class NameNode;
 	private:
-	int file_info;
-        int data_info;
-        int node_position;           //what node has this data
-        bool is_cached;
+		int file_info;
+		int data_info;
+		int node_position;           //what node has this data
+		bool is_cached;
 
 	public:
-	Data();
-	Data(int nodenum, int fileidx, int dataidx);
-	int GetFileInfo();
-	int GetDataInfo();
-	int GetNodePosition();
-	bool IsCached();
+		Data();
+		Data(int nodenum, int fileidx, int dataidx);
+		int GetFileInfo();
+		int GetDataInfo();
+		int GetNodePosition();
+		bool IsCached();
 };
 
 //File Class
 class File {
 	friend class NameNode;
 	private:
-	int file_idx;
-	int file_size;
-	Data **datas;
+		int file_idx;
+		int file_size;
+		Data **datas;
 
 	public:
-	File(int fileidx, int size, int nodesize);
-	int GetFileIdx();
-	int GetFileSize();
-	int GetNodePosition(int dataidx, int order);
-	bool IsInNode(int nodenum, int dataidx);
-	bool IsCached(int nodenum, int dataidx);
-	bool IsCached(int dataidx);	
+		File(int fileidx, int size, int nodesize);
+		int GetFileIdx();
+		int GetFileSize();
+		int GetNodePosition(int dataidx, int order);
+		bool IsInNode(int nodenum, int dataidx);
+		bool IsCached(int nodenum, int dataidx);
+		bool IsCached(int dataidx);	
 };
 
 //NameNode Class
 class NameNode {
 	private:
-	int node_size;
-	int file_num;
-	bool *failed_worker_check;
-	int **node_file_num;
+		int node_size;
+		int file_num;
+		bool *failed_worker_check;
+		int **node_file_num;
 	
 	public:
-	File **file;
-	NameNode(int nodesize, Node *worker[], int file_num, File *f[]);
-	int GetNodeSize();
-	int GetNodeFileNum(int nodeindex, int fileindex);
-	int FindNode(int fileindex, int blockindex);
-	int FindNode(int fileindex, int blockindex, int order);
-	int *FindData(int nodeindex, int fileindex);
-	bool IsInNode(int nodeindex, int fileindex, int blockindex);
+		File **file;
+		NameNode(int nodesize, Node *worker[], int file_num, File *f[]);
+		int GetNodeSize();
+		int GetNodeFileNum(int nodeindex, int fileindex);
+		int FindNode(int fileindex, int blockindex);
+		int FindNode(int fileindex, int blockindex, int order);
+		int *FindData(int nodeindex, int fileindex);
+		bool IsInNode(int nodeindex, int fileindex, int blockindex);
 };
 
 //Container Class
@@ -75,94 +75,96 @@ class Container {
 	friend class Node;
 	friend class ResourceManager;
 	private:
-	int working_time;
-	Application *task;
-	int task_index;
-	bool is_working;
+		int working_time;
+		Application *task;
+		int task_index;
+		bool is_working;
 	
 	public:
-	Container();
-	void TaskExecute(Node *node, Application *job, int fileidx, int blockidx, string state); 
-	int GetWorkingTime();
-	bool GetIsWorking();
-	int GetAvgTaskTime();
+		Container();
+		void TaskExecute(Node *node, Application *job, int fileidx, int blockidx, string state); 
+		int GetWorkingTime();
+		bool GetIsWorking();
+		int GetAvgTaskTime();
 };
 
 //Node Class
 class Node {
 	friend class ResourceManager;
 	private:
-	int node_idx;
-	bool is_fail;
-	int cache_size;
-	int container_size;
-	Container *container;
+		int node_idx;
+		bool is_fail;
+		int cache_size;
+		int container_size;
+		Container *container;
 
 	public:
-	Node(int idx, int cachesize, int contsize);
-	int GetContSize();
+		Node(int idx, int cachesize, int contsize);
+		int GetContSize();
 };
 
 //Application Class
 class Application {
 	friend class ResourceManager;
 	private:
-	int app_idx;		//app index
-	string app_type;	//application name
-	int file_idx;		//which file is needed
-	int mapper_num;		
-	int reducer_num;
-	int avg_task_time_per_block;
-	int skip_count;		
-	int skip_checker;	//threshold
-	bool *working_state;
-	int task_pointer;
-	int task_counter;	//threshold
-	int access_time;
-	
+		int app_idx;		//app index
+		string app_type;	//application name
+		int file_idx;		//which file is needed
+		int mapper_num;		
+		int reducer_num;
+		int avg_task_time_per_block;
+		int skip_count;		
+		int skip_checker;	//threshold
+		bool *working_state;
+		int task_pointer;
+		int task_counter;	//threshold
+		int access_time;
+
 	public:
-	Application(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount);
-	void SetProcessed(int taskidx);
-	void SetWorkingState(int taskidx);
-	int GetAvgTaskTime();
-	int GetSkipCount();
-	bool IsCompleted();
-	bool GetWorkingState(int taskidx);
-	bool GetProcessingState(int taskidx);
-	void AddTaskCounter();
+		Application(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount);
+		void SetProcessed(int taskidx);
+		void SetWorkingState(int taskidx);
+		int GetAvgTaskTime();
+		int GetSkipCount();
+		bool IsCompleted();
+		bool GetWorkingState(int taskidx);
+		bool GetProcessingState(int taskidx);
+		void AddTaskCounter();
 };
 
 class Grep : public Application {
-        private:
+	private:
                         
-        public:         
-        Grep(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
+	public:         
+		Grep(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
 	}
-};                      
+};
+
 class WordCount: public Application {
-        private:
+	private:
                         
-        public:         
-        WordCount(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
+	public:         
+		WordCount(int appnum, string type, File *f, int rednum, int avgtasktime, int accesstime, int skipcount) : Application(appnum, type, f, rednum, avgtasktime, accesstime, skipcount) {
 	}
 };
 
 //ResourceManager Class
 class ResourceManager {
 	private:
-	Application *job_pointer;
+		Application *job_pointer;
+
 	public:
-	void JobCompleteManager(NameNode *NM, Node *nodes[]);
-	void DelayScheduling(NameNode *NM, Node *nodes[], Application *jobs[], int app_num);
+		void JobCompleteManager(NameNode *NM, Node *nodes[]);
+		void DelayScheduling(NameNode *NM, Node *nodes[], Application *jobs[], int app_num);
 };
 
 //Data Class implementation------------------------------------------------------------------------
 
 Data::Data() {
 	this->file_info = -1;
-        this->data_info = -1;
-        this->node_position = -1;
-        this->is_cached = false;
+	this->data_info = -1;
+	this->node_position = -1;
+	this->is_cached = false;
 }
 
 Data::Data(int nodenum, int fileidx, int dataidx) {
@@ -173,9 +175,7 @@ Data::Data(int nodenum, int fileidx, int dataidx) {
 }
 
 int Data::GetFileInfo() { return file_info; }
-
 int Data::GetDataInfo() { return data_info; }
-
 int Data::GetNodePosition() { return node_position; }
 
 bool Data::IsCached() { return is_cached; }
@@ -197,9 +197,7 @@ File::File(int fileidx, int size, int nodesize) {
 }
 
 int File::GetFileIdx() { return file_idx; }
-
 int File::GetFileSize() { return file_size; }
-
 int File::GetNodePosition(int dataidx, int order) { return this->datas[dataidx][order].GetNodePosition(); }
 
 bool File::IsInNode(int nodenum, int dataidx) {
@@ -245,7 +243,6 @@ NameNode::NameNode(int nodesize, Node *worker[], int filenum, File *f[]) {
 }
 
 int NameNode::GetNodeSize() { return node_size; }
-
 int NameNode::GetNodeFileNum(int nodeindex, int fileindex) { return node_file_num[nodeindex][fileindex]; }
 
 int NameNode::FindNode(int fileindex, int blockindex) {
@@ -301,9 +298,7 @@ void Container::TaskExecute(Node *node, Application *job, int fileidx, int block
 }
 
 int Container::GetWorkingTime() { return working_time; }
-
 bool Container::GetIsWorking() { return is_working; }
-
 int Container::GetAvgTaskTime() { return task->GetAvgTaskTime(); }
 
 //Node Class implementation------------------------------------------------------------------------
@@ -341,7 +336,6 @@ Application::Application(int appnum, string type, File *f, int rednum, int avgta
 void Application::SetWorkingState(int taskidx) { working_state[taskidx] = true; }
 
 int Application::GetAvgTaskTime() { return avg_task_time_per_block; }
-
 int Application::GetSkipCount() {return skip_count; }
 
 bool Application::IsCompleted() {
@@ -391,58 +385,52 @@ void ResourceManager::DelayScheduling(NameNode *NM, Node *nodes[], Application *
 //Main Function
 int main() {
 	// Randomize
-        srand((unsigned int)time(NULL));
+	srand((unsigned int)time(NULL));
+	
 	// 1. Node setting
-        // First, we set each node's size, cache size, container number. Every node have same size.
-        int node_num, cache_size, container_size;
-        cout << "Set node numbers, cache size, number of container. \n";
-        cin >> node_num >> cache_size >> container_size;
+	// First, we set each node's size, cache size, container number. Every node have same size.
+	int node_num, cache_size, container_size;
+	cout << "Set node numbers, cache size, number of container. \n";
+	cin >> node_num >> cache_size >> container_size;
 
 	Node *nodes[node_num];
-        for(int i=0; i<node_num; i++) { nodes[i] = new Node(i, cache_size, container_size); }
+	for(int i=0; i<node_num; i++) { nodes[i] = new Node(i, cache_size, container_size); }
 
-        // 2. Data distribution into node
-        int file_num;
-        cout  << "How many files do you want to save? \n";
-        cin >> file_num;
-        File *files[file_num];
+	// 2. Data distribution into node
+	int file_num;
+	cout  << "How many files do you want to save? \n";
+	cin >> file_num;
+	File *files[file_num];
 
-        int file_size;
-        cout << "Set file size n times\n";
-        for(int i=0; i<file_num; i++) {
-                cin >> file_size;
-                files[i] = new File(i, file_size, node_num);
-                cout << "The file which size is " << file_size << " is stored and distributed in " << node_num << "nodes.\n";
-        }
+	int file_size;
+	cout << "Set file size n times\n";
+	for(int i=0; i<file_num; i++) {
+		cin >> file_size;
+		files[i] = new File(i, file_size, node_num);
+		cout << "The file which size is " << file_size << " is stored and distributed in " << node_num << "nodes.\n";
+	}
 	NameNode Name(node_num, nodes, file_num, files);
-        cout << "All files are stored!\n";
+	cout << "All files are stored!\n";
 	cout << Name.GetNodeSize() << endl;
 
-        for(int i=0; i<file_num; i++) {
+		// test print
+	for(int i=0; i<file_num; i++) {
 		cout << "############"<<endl;
-                for(int j=0; j<files[i]->GetFileSize(); j++) {
-                        cout << files[i]->GetNodePosition(j, 0) << " ";
-                }
+		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetNodePosition(j, 0) << " ";
 		cout << endl;
-                for(int j=0; j<files[i]->GetFileSize(); j++) {
-                        cout << files[i]->GetNodePosition(j, 1) << " ";
-                }
+		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetNodePosition(j, 1) << " ";
 		cout << endl;
-                for(int j=0; j<files[i]->GetFileSize(); j++) {
-                        cout << files[i]->GetNodePosition(j, 2) << " ";
-                }
-                cout << endl;
-        }
-
+		for(int j=0; j<files[i]->GetFileSize(); j++) cout << files[i]->GetNodePosition(j, 2) << " ";
+		cout << endl;
+	}
 	cout << "Each node has these datas.\n";
 
+		// test print
 	for(int i=0; i<node_num; i++) {
 		cout << "Node " << i << " has\n";
 		for(int j=0; j<file_num; j++) {
 			int *arr = Name.FindData(i, j);
-			for(int k=0; k<Name.GetNodeFileNum(i, j); k++) {
-				cout << "(" << j << ", " << arr[k] << ") ";
-			}
+			for(int k=0; k<Name.GetNodeFileNum(i, j); k++) cout << "(" << j << ", " << arr[k] << ") ";
 		}
 		cout << endl;
 	}
@@ -473,10 +461,6 @@ int main() {
 //	}
 
 
-
-
-
- //test!
 
 	return 0;
 }
